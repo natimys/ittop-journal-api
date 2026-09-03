@@ -1,6 +1,7 @@
 from typing import Literal
 
 import httpx
+from .resources.attendance import AttendanceResource
 
 BASE_URL = "https://msapi.top-academy.ru/api/v2"
 
@@ -15,6 +16,15 @@ class Client:
         self.__login = login
         self.__password = password
         self.__access_token = None
+        self.__client = httpx.AsyncClient(
+            headers={
+                "Authorization": f"Bearer {self.__access_token}",
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+            }
+        )
+
+        self.attendance = AttendanceResource(client=self)
 
     async def _send(self, method: str, path: str, **kwargs) -> httpx.Response:
         """
@@ -24,11 +34,8 @@ class Client:
         :param kwargs:
         :return:
         """
-        response = httpx.request(
-            method=method,
-            url=path,
-            **kwargs
-        )
+        print(path)
+        response = await self.__client.request(method=method, url=path, **kwargs)
         response.raise_for_status()
         return response
 
@@ -39,28 +46,25 @@ class Client:
         """
         response = await self._send(
             method="post",
-            path=f"/{BASE_URL}/auth/login",
-            params={
-                "login": self.__login,
-                "password": self.__password
-            }
+            path=f"{BASE_URL}/auth/login",
+            params={"login": self.__login, "password": self.__password},
         )
+        print(response.json())
         self.__access_token = response.json()["access_token"]
 
     async def request(
-            self,
-            method: Literal["GET", "POST"],
-            path: str,
-            **kwargs
+        self, method: Literal["GET", "POST"], path: str, **kwargs
     ) -> httpx.Response:
         """
-
+        Метод, использующий _send() для запросов, с автоматическим логином. Используется в Resource-ах
+        :param method: POST/GET
+        :param path: относительный к BASE_URL путь, пример */auth/login*
+        :param kwargs:
+        :return:
         """
         try:
             response = await self._send(
-                method=method,
-                path=path,
-                **kwargs
+                method=method, path=f"{BASE_URL}/{path}", **kwargs
             )
         except httpx.HTTPStatusError as e:
             if e.response.status_code != 401:
@@ -68,9 +72,5 @@ class Client:
 
             await self._login()
 
-            response = await self._send(
-                method,
-                path,
-                **kwargs
-            )
+            response = await self._send(method, path, **kwargs)
         return response
