@@ -11,7 +11,7 @@ whose exact network contract could not be captured safely.
 ## Install
 
 ```bash
-uv add ittop-journal-api
+uv add git+https://github.com/natimys/ittop-journal-api
 ```
 
 For local development:
