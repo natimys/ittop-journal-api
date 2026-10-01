@@ -32,12 +32,11 @@ class UserInfo(JournalModel):
 class ScheduleLesson(JournalModel):
     id: int | str | None = None
     date: Date | None = None
-    start_time: Time | None = None
-    end_time: Time | None = None
-    subject: str | None = None
-    teacher: str | None = None
-    classroom: str | None = None
-    online_url: str | None = None
+    started_at: Time | None = None
+    finished_at: Time | None = None
+    subject_name: str | None = None
+    teacher_name: str | None = None
+    room_name: str | None = None
 
 
 class VisitRecord(JournalModel):
